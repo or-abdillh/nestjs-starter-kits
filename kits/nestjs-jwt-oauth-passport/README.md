@@ -1,98 +1,505 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🔐 NestJS JWT OAuth Passport Starter Kit
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A **production-ready** NestJS authentication starter kit featuring JWT-based stateless authentication with support for local (email/password) and OAuth 2.0 providers (Google, Facebook, GitHub).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## ✨ Features
 
-## Description
+- ✅ **JWT Authentication** - Stateless token-based authentication
+- ✅ **Local Authentication** - Email and password with secure bcrypt hashing
+- ✅ **OAuth 2.0 SSO** - Google, Facebook, and GitHub integration
+- ✅ **Modular Architecture** - Clean separation of concerns, easy to extend
+- ✅ **TypeScript** - Full type safety
+- ✅ **Swagger Documentation** - Auto-generated API docs
+- ✅ **Production Ready** - Security best practices built-in
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📋 Table of Contents
 
-## Project setup
+- [Installation](#installation)
+- [Environment Configuration](#environment-configuration)
+- [Authentication Flows](#authentication-flows)
+- [API Endpoints](#api-endpoints)
+- [Architecture](#architecture)
+- [Adding New OAuth Providers](#adding-new-oauth-providers)
+- [Production Deployment](#production-deployment)
+
+## 🚀 Installation
 
 ```bash
-$ npm install
+# Install dependencies
+npm install
+
+# Copy environment template
+cp .env.example .env
+
+# Configure your environment variables (see below)
+# Edit .env with your actual credentials
+
+# Start development server
+npm run start:dev
 ```
 
-## Compile and run the project
+The application will start on `http://localhost:3000`
+
+Access Swagger documentation at `http://localhost:3000/docs`
+
+## ⚙️ Environment Configuration
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# Application
+PORT=3000
+NODE_ENV=development
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRES_IN=1h
+
+# Google OAuth (Optional - only if using Google login)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+
+# Facebook OAuth (Optional - only if using Facebook login)
+FACEBOOK_CLIENT_ID=your-facebook-app-id
+FACEBOOK_CLIENT_SECRET=your-facebook-app-secret
+FACEBOOK_CALLBACK_URL=http://localhost:3000/auth/facebook/callback
+
+# GitHub OAuth (Optional - only if using GitHub login)
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
+```
+
+### Setting up OAuth Providers
+
+#### Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URI: `http://localhost:3000/auth/google/callback`
+6. Copy Client ID and Client Secret to `.env`
+
+#### Facebook OAuth
+
+1. Go to [Facebook Developers](https://developers.facebook.com/)
+2. Create a new app
+3. Add Facebook Login product
+4. Add redirect URI: `http://localhost:3000/auth/facebook/callback`
+5. Copy App ID and App Secret to `.env`
+
+#### GitHub OAuth
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Create a new OAuth App
+3. Set callback URL: `http://localhost:3000/auth/github/callback`
+4. Copy Client ID and Client Secret to `.env`
+
+## 🔄 Authentication Flows
+
+### Local Authentication (Email/Password)
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant AuthService
+    participant UserService
+
+    Client->>API: POST /auth/register
+    API->>AuthService: register(email, password, ...)
+    AuthService->>UserService: create(hashedPassword, ...)
+    UserService-->>AuthService: user
+    AuthService-->>API: { accessToken, user }
+    API-->>Client: 201 Created
+
+    Client->>API: POST /auth/login
+    API->>AuthService: validateUser(email, password)
+    AuthService->>UserService: findByEmail(email)
+    UserService-->>AuthService: user
+    AuthService-->>API: { accessToken, user }
+    API-->>Client: 200 OK
+```
+
+### OAuth Authentication
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant OAuth Provider
+    participant AuthService
+    participant UserService
+
+    Client->>API: GET /auth/google
+    API-->>Client: 302 Redirect to Google
+    Client->>OAuth Provider: Authenticate
+    OAuth Provider-->>Client: 302 Redirect to callback
+    Client->>API: GET /auth/google/callback
+    API->>AuthService: validateOAuthLogin(profile)
+    AuthService->>UserService: findOrCreateOAuthUser(profile)
+    UserService-->>AuthService: user
+    AuthService-->>API: { accessToken, user }
+    API-->>Client: 200 OK
+```
+
+## 📡 API Endpoints
+
+### Authentication
+
+#### Register
+
+```http
+POST /auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "SecurePass123!",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+```
+
+**Response:**
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "createdAt": "2024-01-05T10:00:00.000Z"
+  }
+}
+```
+
+#### Login
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "SecurePass123!"
+}
+```
+
+**Response:** Same as register
+
+#### Get Current User
+
+```http
+GET /auth/me
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "id": "uuid",
+  "email": "user@example.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "createdAt": "2024-01-05T10:00:00.000Z"
+}
+```
+
+### OAuth Endpoints
+
+#### Google OAuth
+
+```http
+GET /auth/google              # Initiates Google OAuth flow
+GET /auth/google/callback     # Google callback (handled automatically)
+```
+
+#### Facebook OAuth
+
+```http
+GET /auth/facebook            # Initiates Facebook OAuth flow
+GET /auth/facebook/callback   # Facebook callback (handled automatically)
+```
+
+#### GitHub OAuth
+
+```http
+GET /auth/github              # Initiates GitHub OAuth flow
+GET /auth/github/callback     # GitHub callback (handled automatically)
+```
+
+All OAuth callbacks return the same response format as login/register.
+
+## 🏗 Architecture
+
+### Project Structure
+
+```
+src/
+├── auth/
+│   ├── dto/                    # Data Transfer Objects
+│   │   ├── register.dto.ts
+│   │   ├── login.dto.ts
+│   │   └── auth-response.dto.ts
+│   ├── guards/                 # Authentication Guards
+│   │   ├── local-auth.guard.ts
+│   │   ├── jwt-auth.guard.ts
+│   │   ├── google-auth.guard.ts
+│   │   ├── facebook-auth.guard.ts
+│   │   └── github-auth.guard.ts
+│   ├── interfaces/             # TypeScript Interfaces
+│   │   ├── jwt-payload.interface.ts
+│   │   └── oauth-profile.interface.ts
+│   ├── strategies/             # Passport Strategies
+│   │   ├── local.strategy.ts
+│   │   ├── jwt.strategy.ts
+│   │   ├── google.strategy.ts
+│   │   ├── facebook.strategy.ts
+│   │   └── github.strategy.ts
+│   ├── auth.controller.ts      # Authentication endpoints
+│   ├── auth.service.ts         # Core auth logic
+│   └── auth.module.ts          # Auth module configuration
+├── user/
+│   ├── interfaces/
+│   │   └── user.interface.ts
+│   ├── user.service.ts         # User management (in-memory)
+│   └── user.module.ts
+├── common/
+│   └── utils/
+│       └── hash.util.ts        # Password hashing utilities
+├── app.module.ts
+└── main.ts
+```
+
+### Key Design Decisions
+
+#### 1. **Strategy Pattern**
+
+Each authentication method (Local, JWT, OAuth providers) is implemented as a separate Passport strategy. This makes the system:
+
+- Easy to understand
+- Easy to extend
+- Easy to test
+- Easy to maintain
+
+#### 2. **Database Abstraction**
+
+The `UserService` uses an in-memory store by default. In production, replace this with your database solution:
+
+```typescript
+// Example with TypeORM
+@Injectable()
+export class UserService {
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
+
+  async create(userData: Partial<User>): Promise<User> {
+    const user = this.userRepository.create(userData);
+    return this.userRepository.save(user);
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { email } });
+  }
+  // ... other methods
+}
+```
+
+#### 3. **OAuth Profile Normalization**
+
+All OAuth providers return different profile structures. We normalize them to a consistent `OAuthProfile` interface:
+
+```typescript
+interface OAuthProfile {
+  provider: string;
+  providerId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+```
+
+This allows the `AuthService` to handle all OAuth providers identically.
+
+#### 4. **Security Best Practices**
+
+- ✅ Passwords hashed with bcrypt (10 salt rounds)
+- ✅ JWT tokens contain minimal data (only user ID and email)
+- ✅ OAuth provider tokens never exposed to clients
+- ✅ JWT expiration configured
+- ✅ Input validation on all endpoints
+- ✅ CORS enabled for frontend integration
+
+## 🔧 Adding New OAuth Providers
+
+To add a new OAuth provider (e.g., Twitter, LinkedIn):
+
+### 1. Install the Passport strategy
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install passport-twitter @types/passport-twitter
 ```
 
-## Run tests
+### 2. Create the strategy
 
-```bash
-# unit tests
-$ npm run test
+```typescript
+// src/auth/strategies/twitter.strategy.ts
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy } from 'passport-twitter';
+import { ConfigService } from '@nestjs/config';
+import { OAuthProfile } from '../interfaces/oauth-profile.interface';
 
-# e2e tests
-$ npm run test:e2e
+@Injectable()
+export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
+  constructor(private readonly configService: ConfigService) {
+    super({
+      consumerKey: configService.get<string>('TWITTER_CONSUMER_KEY'),
+      consumerSecret: configService.get<string>('TWITTER_CONSUMER_SECRET'),
+      callbackURL: configService.get<string>('TWITTER_CALLBACK_URL'),
+      includeEmail: true,
+    });
+  }
 
-# test coverage
-$ npm run test:cov
+  async validate(
+    token: string,
+    tokenSecret: string,
+    profile: any,
+    done: (error: any, user?: any) => void,
+  ): Promise<void> {
+    // Normalize to OAuthProfile format
+    const oauthProfile: OAuthProfile = {
+      provider: 'twitter',
+      providerId: profile.id,
+      email: profile.emails[0].value,
+      firstName: profile.displayName.split(' ')[0],
+      lastName: profile.displayName.split(' ').slice(1).join(' '),
+    };
+
+    done(null, oauthProfile);
+  }
+}
 ```
 
-## Deployment
+### 3. Create the guard
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+```typescript
+// src/auth/guards/twitter-auth.guard.ts
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+@Injectable()
+export class TwitterAuthGuard extends AuthGuard('twitter') {}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 4. Add endpoints to controller
 
-## Resources
+```typescript
+// src/auth/auth.controller.ts
+@Get('twitter')
+@UseGuards(TwitterAuthGuard)
+async twitterAuth(): Promise<void> {}
 
-Check out a few resources that may come in handy when working with NestJS:
+@Get('twitter/callback')
+@UseGuards(TwitterAuthGuard)
+async twitterAuthCallback(@Request() req): Promise<AuthResponseDto> {
+  const profile: OAuthProfile = req.user;
+  const user = await this.authService.validateOAuthLogin(profile);
+  return this.authService.login(user);
+}
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### 5. Register in AuthModule
 
-## Support
+```typescript
+// src/auth/auth.module.ts
+providers: [
+  // ... existing providers
+  TwitterStrategy,
+],
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### 6. Add environment variables
 
-## Stay in touch
+```env
+TWITTER_CONSUMER_KEY=your-twitter-consumer-key
+TWITTER_CONSUMER_SECRET=your-twitter-consumer-secret
+TWITTER_CALLBACK_URL=http://localhost:3000/auth/twitter/callback
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+That's it! The new provider follows the same pattern as existing ones.
 
-## License
+## 🚀 Production Deployment
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Environment Variables
+
+**CRITICAL:** Never use default values in production!
+
+```env
+# Generate a strong secret (example using Node.js)
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+JWT_SECRET=<your-generated-secret>
+JWT_EXPIRES_IN=1h
+
+# Update callback URLs to your production domain
+GOOGLE_CALLBACK_URL=https://yourdomain.com/auth/google/callback
+FACEBOOK_CALLBACK_URL=https://yourdomain.com/auth/facebook/callback
+GITHUB_CALLBACK_URL=https://yourdomain.com/auth/github/callback
+```
+
+### Database Integration
+
+Replace the in-memory `UserService` with your database solution:
+
+1. Install your ORM (TypeORM, Prisma, Mongoose)
+2. Create User entity/model
+3. Update `UserService` methods to use database queries
+4. The rest of the auth system remains unchanged!
+
+### Security Checklist
+
+- [ ] Strong JWT secret (minimum 32 characters)
+- [ ] Appropriate JWT expiration time
+- [ ] HTTPS enabled
+- [ ] CORS configured for your frontend domain
+- [ ] Rate limiting implemented
+- [ ] Helmet.js for security headers
+- [ ] Environment variables secured
+- [ ] OAuth callback URLs updated for production
+- [ ] Database connection secured
+- [ ] Logging and monitoring enabled
+
+### Recommended Enhancements
+
+This starter kit provides a solid foundation. Consider adding:
+
+- **Refresh Tokens** - Long-lived tokens for better UX
+- **Email Verification** - Verify user emails on registration
+- **Password Reset** - Forgot password flow
+- **Role-Based Access Control (RBAC)** - User roles and permissions
+- **Multi-Factor Authentication (MFA)** - Enhanced security
+- **Account Linking** - Link multiple OAuth providers to one account
+- **Rate Limiting** - Prevent brute force attacks
+- **Audit Logging** - Track authentication events
+
+## 📚 Additional Resources
+
+- [NestJS Documentation](https://docs.nestjs.com)
+- [Passport.js Documentation](http://www.passportjs.org/)
+- [JWT Best Practices](https://tools.ietf.org/html/rfc8725)
+
+## 📝 License
+
+This starter kit is provided as-is for use in your projects.
+
+---
+
+**Built with ❤️ for real-world applications**
