@@ -41,6 +41,13 @@ export class UserResponseDto {
         example: '2024-01-05T10:00:00.000Z',
     })
     createdAt: Date;
+
+    @ApiProperty({
+        description: 'User roles',
+        example: ['USER'],
+        isArray: true,
+    })
+    roles?: string[];
 }
 
 /**

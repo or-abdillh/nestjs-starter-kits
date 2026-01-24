@@ -126,6 +126,7 @@ export class AuthService {
             lastName: user.lastName,
             provider: user.provider,
             createdAt: user.createdAt,
+            roles: user.roles,
         };
 
         return {

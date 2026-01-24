@@ -88,6 +88,7 @@ export class AuthController {
             lastName: user.lastName,
             provider: user.provider,
             createdAt: user.createdAt,
+            roles: user.roles,
         };
     }
 
