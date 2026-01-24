@@ -49,4 +49,9 @@ export interface User {
      * Account creation timestamp
      */
     createdAt: Date;
+
+    /**
+     * User roles
+     */
+    roles?: import('../../rbac/role.enum').Role[];
 }

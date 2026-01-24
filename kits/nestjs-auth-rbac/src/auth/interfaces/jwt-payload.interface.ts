@@ -14,4 +14,9 @@ export interface JwtPayload {
      * User email
      */
     email: string;
+
+    /**
+     * User roles
+     */
+    roles: import('../../rbac/role.enum').Role[];
 }

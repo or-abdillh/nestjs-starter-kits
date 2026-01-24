@@ -7,6 +7,7 @@ import { AuthResponseDto, UserResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { OAuthProfile } from './interfaces/oauth-profile.interface';
 import { hashPassword, comparePassword } from '../common/utils/hash.util';
+import { Role } from '../rbac/role.enum';
 
 /**
  * AuthService - Core Authentication Logic
@@ -23,6 +24,12 @@ export class AuthService {
         private readonly userService: UserService,
         private readonly jwtService: JwtService,
     ) { }
+
+    /**
+     * In-memory user storage
+     * Replace with database queries in production
+     */
+    private users: User[] = [];
 
     /**
      * Validate user credentials for local authentication
@@ -68,6 +75,7 @@ export class AuthService {
             password: hashedPassword,
             firstName: registerDto.firstName,
             lastName: registerDto.lastName,
+            roles: registerDto.roles,
         });
 
         return this.generateAuthResponse(user);
@@ -105,6 +113,7 @@ export class AuthService {
         const payload: JwtPayload = {
             sub: user.id,
             email: user.email,
+            roles: user.roles || [],
         };
 
         const accessToken = this.jwtService.sign(payload);

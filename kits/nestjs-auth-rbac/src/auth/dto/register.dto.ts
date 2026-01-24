@@ -1,5 +1,6 @@
-import { IsEmail, IsString, MinLength, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsNotEmpty, IsArray, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Role } from 'src/rbac/role.enum';
 
 /**
  * DTO for user registration
@@ -38,4 +39,13 @@ export class RegisterDto {
     @IsString()
     @IsNotEmpty()
     lastName: string;
+
+    @ApiProperty({
+        description: 'User roles',
+        example: [Role.USER],
+    })
+    @IsArray()
+    @IsEnum(Role, { each: true })
+    @IsOptional()
+    roles?: Role[];
 }

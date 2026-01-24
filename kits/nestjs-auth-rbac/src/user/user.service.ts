@@ -1,6 +1,7 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { User } from './interfaces/user.interface';
 import { randomUUID } from 'crypto';
+import { Role } from '../rbac/role.enum';
 
 /**
  * UserService - In-Memory User Store
@@ -46,6 +47,7 @@ export class UserService {
             provider: userData.provider,
             providerId: userData.providerId,
             createdAt: new Date(),
+            roles: userData.roles || [Role.USER],
         };
 
         this.users.push(user);

@@ -27,10 +27,19 @@ async function bootstrap() {
 
   // Configure Swagger
   const config = new DocumentBuilder()
-    .setTitle('NestJS JWT OAuth Passport Starter Kit')
+    .setTitle('NestJS Auth With RBAC Starter Kit')
     .setDescription('Authentication API documentation')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        in: 'header',
+      },
+      'access-token'
+    )
     .build();
 
   // Create Swagger document
