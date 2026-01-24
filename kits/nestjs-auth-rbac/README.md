@@ -1,10 +1,11 @@
-# 🔐 NestJS JWT OAuth Passport Starter Kit
+# 🔐 NestJS Auth with RBAC Starter Kit
 
-A **production-ready** NestJS authentication starter kit featuring JWT-based stateless authentication with support for local (email/password) and OAuth 2.0 providers (Google, Facebook, GitHub).
+A **production-ready** NestJS authentication starter kit featuring JWT-based stateless authentication, Role-Based Access Control (RBAC), and support for local (email/password) and OAuth 2.0 providers (Google, Facebook, GitHub).
 
 ## ✨ Features
 
 - ✅ **JWT Authentication** - Stateless token-based authentication
+- ✅ **Role-Based Access Control (RBAC)** - Declarative permission system (`@Roles()`)
 - ✅ **Local Authentication** - Email and password with secure bcrypt hashing
 - ✅ **OAuth 2.0 SSO** - Google, Facebook, and GitHub integration
 - ✅ **Modular Architecture** - Clean separation of concerns, easy to extend
@@ -145,6 +146,49 @@ sequenceDiagram
     API-->>Client: 200 OK
 ```
 
+## 🛡️ Role-Based Access Control (RBAC)
+
+This starter kit includes a robust RBAC system designed for scalability and ease of use.
+
+### 1. Define Roles
+
+Roles are defined in `src/rbac/role.enum.ts`:
+
+```typescript
+export enum Role {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ADMIN = 'ADMIN',
+  USER = 'USER',
+}
+```
+
+### 2. Protect Routes
+
+Use the `@Roles()` decorator to protect your endpoints.
+
+```typescript
+@Get('admin')
+@Roles(Role.ADMIN) // Only ADMIN can access
+getAdminData() {
+  return 'Admin Data';
+}
+
+@Get('flexible')
+@Roles(Role.ADMIN, Role.USER) // ADMIN or USER can access
+getFlexibleData() {
+  return 'Flexible Data';
+}
+```
+
+### 3. How it Works
+
+1.  **Login**: When a user logs in, their roles are embedded into the `accessToken` payload.
+2.  **Request**: Client sends the `accessToken` in the `Authorization` header.
+3.  **Guard**: The route is protected by `JwtAuthGuard` (validates token) and `RolesGuard` (validates roles). `RolesGuard` checks if the user has the required roles.
+4.  **Result**:
+    - If authorized: Request proceeds.
+    - If unauthorized: Returns `403 Forbidden`.
+
 ## 📡 API Endpoints
 
 ### Authentication
@@ -159,7 +203,8 @@ Content-Type: application/json
   "email": "user@example.com",
   "password": "SecurePass123!",
   "firstName": "John",
-  "lastName": "Doe"
+  "lastName": "Doe",
+  "roles": ["USER"]
 }
 ```
 
@@ -173,7 +218,8 @@ Content-Type: application/json
     "email": "user@example.com",
     "firstName": "John",
     "lastName": "Doe",
-    "createdAt": "2024-01-05T10:00:00.000Z"
+    "createdAt": "2024-01-05T10:00:00.000Z",
+    "roles": ["USER"]
   }
 }
 ```
@@ -207,7 +253,8 @@ Authorization: Bearer <access_token>
   "email": "user@example.com",
   "firstName": "John",
   "lastName": "Doe",
-  "createdAt": "2024-01-05T10:00:00.000Z"
+  "createdAt": "2024-01-05T10:00:00.000Z",
+  "roles": ["USER"]
 }
 ```
 
@@ -235,6 +282,18 @@ GET /auth/github/callback     # GitHub callback (handled automatically)
 ```
 
 All OAuth callbacks return the same response format as login/register.
+
+### RBAC Testing (`/rbac-test`)
+
+Use these endpoints to verify role permissions.
+
+```http
+GET /rbac-test/public           # Accessible by anyone with a token
+GET /rbac-test/user             # Requires USER role
+GET /rbac-test/admin            # Requires ADMIN role
+GET /rbac-test/super-admin      # Requires SUPER_ADMIN role
+GET /rbac-test/admin-or-user    # Requires ADMIN or USER role
+```
 
 ## 🏗 Architecture
 
@@ -265,6 +324,13 @@ src/
 │   ├── auth.controller.ts      # Authentication endpoints
 │   ├── auth.service.ts         # Core auth logic
 │   └── auth.module.ts          # Auth module configuration
+├── rbac/
+│   ├── role.enum.ts            # Role definitions
+│   ├── roles.decorator.ts      # Custom decorator
+│   ├── roles.guard.ts          # Role verification guard
+│   ├── rbac.interceptor.ts     # Unified error handling
+│   ├── rbac-test.controller.ts # Test controller
+│   └── rbac.module.ts          # RBAC module
 ├── user/
 │   ├── interfaces/
 │   │   └── user.interface.ts
@@ -313,6 +379,8 @@ export class UserService {
 }
 ```
 
+> **Note**: Ensure your `User` entity includes a `roles` column (array of strings or relation) to persist RBAC roles.
+
 #### 3. **OAuth Profile Normalization**
 
 All OAuth providers return different profile structures. We normalize them to a consistent `OAuthProfile` interface:
@@ -337,6 +405,12 @@ This allows the `AuthService` to handle all OAuth providers identically.
 - ✅ JWT expiration configured
 - ✅ Input validation on all endpoints
 - ✅ CORS enabled for frontend integration
+
+#### 5. **Role-Based Access Control (RBAC)**
+
+- **Declarative**: Permissions are defined using decorators (`@Roles`) directly on controllers/handlers.
+- **Guard-Based**: The `RolesGuard` enforces permissions. It must be used after `JwtAuthGuard` (e.g., `@UseGuards(JwtAuthGuard, RolesGuard)`).
+- **Efficient**: User roles are embedded in the JWT, avoiding database lookups on every protected request.
 
 ## 🔧 Adding New OAuth Providers
 
@@ -484,7 +558,6 @@ This starter kit provides a solid foundation. Consider adding:
 - **Refresh Tokens** - Long-lived tokens for better UX
 - **Email Verification** - Verify user emails on registration
 - **Password Reset** - Forgot password flow
-- **Role-Based Access Control (RBAC)** - User roles and permissions
 - **Multi-Factor Authentication (MFA)** - Enhanced security
 - **Account Linking** - Link multiple OAuth providers to one account
 - **Rate Limiting** - Prevent brute force attacks
